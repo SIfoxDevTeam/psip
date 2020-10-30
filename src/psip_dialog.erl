@@ -304,7 +304,7 @@ handle_info({'DOWN', Ref, process, Pid, _}, #state{owner_mon = Ref, need_cleanup
     case ersip_dialog:is_early(State#state.dialog) of
         true ->
             log_warning(State, "owner of early dialog is died: ~p; stop dialog", [Pid]),
-            {noreply, State};
+            {stop, normal, State};
         false ->
             log_warning(State, "owner of confirmed dialog is died: ~p; destroy dialog gracefully", [Pid]),
             case State#state.dialog_type of
