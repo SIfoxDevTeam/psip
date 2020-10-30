@@ -18,7 +18,8 @@
          uac_request/2,
          uac_result/2,
          count/0,
-         set_owner/2
+         set_owner/2,
+         uas_cancel/1
         ]).
 
 %% gen_server
@@ -143,6 +144,15 @@ set_owner(Pid, DialogId) when is_pid(Pid) ->
 -spec count() -> non_neg_integer().
 count() ->
     psip_dialog_sup:num_active().
+
+-spec uas_cancel(ersip_dialog:id()) -> ok.
+uas_cancel(DialogId) ->
+    case find_dialog(DialogId) of
+        {ok, DialogPid} ->
+            gen_server:cast(DialogPid, uas_cancel);
+        not_found ->
+            ok
+    end.
 
 %%===================================================================
 %% gen_server callbacks
@@ -296,6 +306,9 @@ handle_cast({set_owner, Pid}, #state{} = State) ->
     log_debug(State, "set owner to ~p", [Pid]),
     OwnerMon = erlang:monitor(process, Pid),
     {noreply, State#state{owner_mon = OwnerMon}};
+handle_cast(uas_cancel, State) ->
+    log_debug(State, "finished after cancel", []),
+    {stop, normal, State};
 handle_cast(Request, State) ->
     log_error(State, "unexpected cast: ~0p", [Request]),
     {noreply, State}.
