@@ -329,8 +329,13 @@ handle_info({'DOWN', Ref, process, Pid, _}, #state{owner_mon = Ref, need_cleanup
                 notify -> error(not_supported_yet)
             end
     end;
-handle_info({'DOWN', _Ref, process, _Pid, _}, #state{owner_mon = _} = State) ->
+handle_info({'DOWN', _Ref, process, Pid, _}, #state{owner_mon = _} = State) ->
+    log_debug(State, "owner of dialog is died: ~p; start stop_timeout", [Pid]),
+    erlang:send_after(timer:seconds(32), self(), stop_timeout),
     {noreply, State};
+handle_info(stop_timeout, State) ->
+    log_debug(State, "stop_timeout; stop dialog", []),
+    {stop, normal, State};
 handle_info(Msg, State) ->
     log_error(State, "unexpected info: ~0p", [Msg]),
     {noreply, State}.
